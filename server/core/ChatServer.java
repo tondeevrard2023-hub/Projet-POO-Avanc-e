@@ -30,7 +30,6 @@ public class ChatServer {
             while (true) {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Un nouvel utilisateur vient de se connecter: "+ clientSocket.getInetAddress());
-
                 // Flux IO
                 ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
                 ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
