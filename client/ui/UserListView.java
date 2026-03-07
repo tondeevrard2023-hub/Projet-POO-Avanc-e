@@ -2,12 +2,14 @@ package ui;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -19,35 +21,29 @@ import model.User;
 public class UserListView extends BorderPane {
     
     private ObservableList<User> users;
+    private FilteredList<User> filteredUsers;
     private ListView<User> userList;
     private TextField searchField;
     private Label titleLabel;
     private Label countLabel;
 
-    // Constructeur - Sans utilisateurs par défaut
     public UserListView() {
         initializeUI();
-        // Plus d'appel à loadDemoUsers() - Le serveur ajoutera les utilisateurs
     }
     
     private void initializeUI() {
-        // Style général
         this.setStyle("-fx-background-color: white; -fx-border-color: #e9edef; -fx-border-width: 1 0 0 0;");
         this.setPrefWidth(320);
         
-        // Panneau principal
         VBox mainContainer = new VBox(10);
         mainContainer.setPadding(new Insets(10));
         mainContainer.setStyle("-fx-background-color: white;");
         
-        // En-tête
         HBox headerBox = createHeader();
-        
-        // Barre de recherche
         searchField = createSearchField();
         
-        // Liste des utilisateurs (vide au départ)
         users = FXCollections.observableArrayList();
+        filteredUsers = new FilteredList<>(users, p -> true);
         userList = createUserList();
         
         mainContainer.getChildren().addAll(headerBox, searchField, userList);
@@ -61,7 +57,7 @@ public class UserListView extends BorderPane {
         headerBox.setAlignment(Pos.CENTER_LEFT);
         headerBox.setPadding(new Insets(0, 0, 5, 5));
         
-        titleLabel = new Label("Contacts");
+        titleLabel = new Label("👥 Contacts");
         titleLabel.setFont(Font.font("System", FontWeight.BOLD, 16));
         titleLabel.setStyle("-fx-text-fill: #00a884;");
         
@@ -80,7 +76,7 @@ public class UserListView extends BorderPane {
     
     private TextField createSearchField() {
         TextField searchField = new TextField();
-        searchField.setPromptText("Rechercher un contact...");
+        searchField.setPromptText("🔍 Rechercher un contact...");
         searchField.setStyle(
             "-fx-background-color: #f0f2f5;" +
             "-fx-background-radius: 20;" +
@@ -88,14 +84,26 @@ public class UserListView extends BorderPane {
             "-fx-font-size: 13px;"
         );
         
-        searchField.textProperty().addListener((obs, oldVal, newVal) -> filterUsers(newVal));
+        Tooltip searchTooltip = new Tooltip("Tapez le nom d'un contact");
+        searchField.setTooltip(searchTooltip);
+        
+        searchField.textProperty().addListener((obs, oldVal, newVal) -> {
+            filteredUsers.setPredicate(user -> {
+                if (newVal == null || newVal.isEmpty()) {
+                    return true;
+                }
+                String lowerCaseFilter = newVal.toLowerCase();
+                return user.getName().toLowerCase().contains(lowerCaseFilter);
+            });
+            updateCount();
+        });
         
         return searchField;
     }
     
     private ListView<User> createUserList() {
         ListView<User> listView = new ListView<>();
-        listView.setItems(users);
+        listView.setItems(filteredUsers);
         listView.setCellFactory(lv -> new UserCell());
         listView.setStyle(
             "-fx-background-color: transparent;" +
@@ -105,25 +113,17 @@ public class UserListView extends BorderPane {
         return listView;
     }
     
-    private void filterUsers(String searchText) {
-        if (searchText == null || searchText.isEmpty()) {
-            userList.setItems(users);
+    private void updateCount() {
+        int total = users.size();
+        int displayed = filteredUsers.size();
+        
+        if (displayed < total) {
+            countLabel.setText(displayed + " sur " + total + " contacts");
         } else {
-            ObservableList<User> filtered = FXCollections.observableArrayList();
-            for (User user : users) {
-                if (user.getName().toLowerCase().contains(searchText.toLowerCase())) {
-                    filtered.add(user);
-                }
-            }
-            userList.setItems(filtered);
+            countLabel.setText(total + " contacts");
         }
     }
     
-    private void updateCount() {
-        countLabel.setText(users.size() + " contacts");
-    }
-    
-    // Cellule personnalisée pour afficher un utilisateur
     private class UserCell extends ListCell<User> {
         @Override
         protected void updateItem(User user, boolean empty) {
@@ -133,7 +133,6 @@ public class UserListView extends BorderPane {
                 setText(null);
                 setGraphic(null);
             } else {
-                // Conteneur principal
                 HBox container = new HBox(12);
                 container.setPadding(new Insets(8, 10, 8, 10));
                 container.setAlignment(Pos.CENTER_LEFT);
@@ -141,27 +140,24 @@ public class UserListView extends BorderPane {
                 
                 // Avatar avec initiale
                 Label avatarLabel = new Label(getInitial(user.getName()));
-                avatarLabel.setMinSize(40, 40);
-                avatarLabel.setMaxSize(40, 40);
+                avatarLabel.setMinSize(45, 45);
+                avatarLabel.setMaxSize(45, 45);
                 avatarLabel.setAlignment(Pos.CENTER);
-                avatarLabel.setFont(Font.font("System", FontWeight.BOLD, 16));
+                avatarLabel.setFont(Font.font("System", FontWeight.BOLD, 18));
                 avatarLabel.setStyle(
                     "-fx-background-color: #6c757d;" +
-                    "-fx-background-radius: 20;" +
+                    "-fx-background-radius: 25;" +
                     "-fx-text-fill: white;"
                 );
                 
-                // Informations utilisateur
                 VBox infoBox = new VBox(3);
                 infoBox.setAlignment(Pos.CENTER_LEFT);
                 
-                // Nom
                 Label nameLabel = new Label(user.getName());
                 nameLabel.setFont(Font.font("System", FontWeight.BOLD, 14));
                 nameLabel.setStyle("-fx-text-fill: #111b21;");
                 
-                // Statut (sera mis à jour par le serveur plus tard)
-                Label statusLabel = new Label("Hors ligne");
+                Label statusLabel = new Label("Contact");
                 statusLabel.setFont(Font.font(12));
                 statusLabel.setStyle("-fx-text-fill: #667781;");
                 
@@ -183,6 +179,11 @@ public class UserListView extends BorderPane {
                     }
                 });
                 
+                // Style pour l'élément sélectionné
+                if (isSelected()) {
+                    container.setStyle("-fx-background-color: #e8f0fe; -fx-background-radius: 10; -fx-border-color: #00a884; -fx-border-radius: 10; -fx-border-width: 1;");
+                }
+                
                 setGraphic(container);
             }
         }
@@ -192,7 +193,7 @@ public class UserListView extends BorderPane {
         }
     }
     
-    // Méthodes publiques pour le serveur
+    // ========== MÉTHODES PUBLIQUES ==========
     
     public User getSelectedUser() {
         return userList.getSelectionModel().getSelectedItem();
@@ -234,15 +235,8 @@ public class UserListView extends BorderPane {
         return users;
     }
     
-    // Méthode pour mettre à jour le statut d'un utilisateur
-    public void updateUserStatus(String username, boolean isOnline) {
-        for (User user : users) {
-            if (user.getName().equals(username)) {
-                // Tu pourras ajouter un champ "online" dans User plus tard
-                // Pour l'instant, on ne fait rien
-                break;
-            }
-        }
-        userList.refresh();
+    // Méthode pour vider la recherche
+    public void resetSearch() {
+        searchField.clear();
     }
 }
