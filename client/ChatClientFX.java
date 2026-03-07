@@ -1,31 +1,17 @@
 import javafx.application.Application;
 import javafx.scene.Scene;
-import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
-
-
-import controller.ChatController;
 import ui.ChatView;
-import ui.UserListView;
-public class ChatClientFX extends Application { 
+
+public class ChatClientFX extends Application {
+
     @Override
     public void start(Stage primaryStage) throws Exception {
-    // --- 1. CRÉATION DE LA VUE ---
-        BorderPane root = new BorderPane();
+        // Solution 1 : ChatView contient tout
         ChatView chatView = new ChatView();
-        UserListView usersView = new UserListView();
-
-        root.setLeft(usersView.getRoot());
-        root.setCenter(chatView);
-
-        Scene scene = new Scene(root, 550, 450);
         
-        // --- 2. CONTRÔLEUR ---
-        ChatController controller = new ChatController(chatView, usersView);
-        
-        // --- 3. SCÈNE ET AFFICHAGE ---
-        primaryStage.setScene(scene);
-        primaryStage.setTitle("Chat Client - " + controller.getUser().getName());
+        primaryStage.setTitle("Chat Application");
+        primaryStage.setScene(new Scene(chatView, 900, 600));
         primaryStage.show();
     }
 
