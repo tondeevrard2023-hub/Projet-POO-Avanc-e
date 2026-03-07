@@ -1,17 +1,19 @@
 package core;
 
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 import model.Message;
 import model.MessageText;
+import model.User;
 
 public class HandlerClient implements Runnable {
     private Socket clientSocket;
     private ObjectOutputStream out;
     private ObjectInputStream in;
-    private String username;
+    private User user;
 
     public HandlerClient(Socket clientSocket, ObjectOutputStream out, ObjectInputStream in) {
         this.clientSocket = clientSocket;
@@ -24,10 +26,11 @@ public class HandlerClient implements Runnable {
         try {
             // Ajouter ici
             ChatServer.addUser(out);
+            user = (User) in.readObject();
 
             // annoncer à tous qu'il s'est connecté
             int len = ChatServer.getClients().size();
-            ChatServer.annonce(username + " s'est connecté (" + len + " connecté" + (len>1? "s":"") + ")");
+            ChatServer.annonce(user.getName() + " s'est connecté (" + len + " connecté" + (len>1? "s":"") + ")");
             
             while (true) {
                 Message message = (Message) in.readObject();
@@ -40,8 +43,8 @@ public class HandlerClient implements Runnable {
 
                 ChatServer.broadcast(message, out);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println(e.toString());
         } finally {
             this.closeConnection();
         }
@@ -50,9 +53,9 @@ public class HandlerClient implements Runnable {
     private void closeConnection() {
         ChatServer.getClients().remove(out);
 
-        if (username != null) {
+        if (user != null) {
             ChatServer.getNomsClients().remove(out);
-            ChatServer.annonce(username + " s'est connecté.");
+            ChatServer.annonce(user.getName() + " s'est connecté.");
             System.out.println("Un utilisateur vient de se déconnecter: " + clientSocket.getInetAddress());
         }
         try {

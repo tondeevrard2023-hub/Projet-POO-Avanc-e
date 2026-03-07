@@ -29,7 +29,7 @@ public class ChatController {
         showLoginDialog();
 
         // connexion
-        connection.connect("localhost", 12345);
+        connection.connect("localhost", 12345, currentUser);
         
         // écoute
         connection.setOnMessageReceived(msg -> {

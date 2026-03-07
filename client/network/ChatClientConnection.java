@@ -6,6 +6,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.function.Consumer;
 import model.Message;
+import model.User;
 
 // import javafx.application.Platform;
 
@@ -18,12 +19,12 @@ public class ChatClientConnection {
     public ChatClientConnection() {
     }
     
-    public void connect(String host, int port) {
+    public void connect(String host, int port, User user) {
         try {
             socket = new Socket(host, port);
             in = new ObjectInputStream(socket.getInputStream());
             out = new ObjectOutputStream(socket.getOutputStream());
-
+            out.writeObject(user);
             new Thread(this::listen).start();
         } catch (IOException e) {
             System.out.println(e.toString());
