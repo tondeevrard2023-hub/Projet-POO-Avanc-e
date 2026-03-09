@@ -1,0 +1,47 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "ChatClientFX",
+            "request": "launch",
+            "mainClass": "controller.ChatClientFX",
+            "projectName": "client_d67d77f6"
+        },
+        {
+            "type": "java",
+            "name": "Main",
+            "request": "launch",
+            "mainClass": "Main",
+            "projectName": "client_d67d77f6"
+        },
+        {
+            "type": "java",
+            "name": "EchoServer",
+            "request": "launch",
+            "mainClass": "model.EchoServer",
+            "projectName": "client_d67d77f6"
+        },
+        {
+            "type": "java",
+            "name": "EchoServer",
+            "request": "launch",
+            "mainClass": "fakeServer.EchoServer",
+            "projectName": "client_d67d77f6"
+        },
+        {
+            "type": "java",
+            "name": "EchoServer",
+            "request": "launch",
+            "mainClass": "fakeServer.EchoServer",
+            "projectName": "client_bd8a3c0f"
+        },
+        {
+            "type": "java",
+            "name": "Run ChatClientFX",
+            "request": "launch",
+            "mainClass": "ChatClientFX",
+            "vmArgs": "--module-path /usr/share/openjfx/lib --add-modules javafx.graphics,javafx.controls,javafx.fxml"
+        }
+    ]
+}
