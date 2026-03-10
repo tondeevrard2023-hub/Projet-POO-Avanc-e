@@ -2,8 +2,6 @@ package managerui;
 
 import controller.ChatClientFX;
 import javafx.application.Platform;
-import model.MessageText;
-import model.User;
 import ui.ChatView;
 
 public class XConnect {
