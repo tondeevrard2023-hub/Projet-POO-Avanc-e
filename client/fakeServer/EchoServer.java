@@ -31,32 +31,47 @@ public class EchoServer {
     }
 
     private static void handleClient(Socket socket) {
+    try (
+        ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+        ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
+    ) {
+        User user = (User) in.readObject();
+        // S'assurer que le nom n'est pas null
+        if (user.getName() == null || user.getName().trim().isEmpty()) {
+            user.setName("Anonyme");
+        }
+        System.out.println(user.getName() + " s'est connecté !");
+        
+        // Créer un message système avec un expéditeur valide
+        User systemUser = new User("Système");
+        MessageText connectMsg = new MessageText(user.getName() + " s'est connecté !", systemUser);
+        connectMsg.setVisibility("public");
+        out.writeObject(connectMsg);
 
-        try (
-            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-            ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
-        ) {
-            User user = (User) in.readObject();
-            System.out.println(user.getName() + " s'est connecté !");
-            out.writeObject(new MessageText(user.getName() + " s'est connecté !", user));
-
-            while (true) {
-
-                Message message = (Message) in.readObject();
-                if (message instanceof MessageText msgText) {
-                    System.out.println("Received: " + msgText.getContent());
-                } else {
-                    MessageFile msgFile = (MessageFile) message;
-                    System.out.println("Received file: " + msgFile.getFileName() + " (" + msgFile.getData().length + " bytes)");
-                }
-
-                out.writeObject(message);
-                out.flush();
+        while (true) {
+            Message message = (Message) in.readObject();
+            
+            // S'assurer que l'expéditeur a un nom
+            if (message.getSender() == null) {
+                message.setSender(user);
+            } else if (message.getSender().getName() == null) {
+                message.getSender().setName(user.getName());
+            }
+            
+            if (message instanceof MessageText msgText) {
+                System.out.println("Received: " + msgText.getContent());
+            } else {
+                MessageFile msgFile = (MessageFile) message;
+                System.out.println("Received file: " + msgFile.getFileName() + 
+                                 " (" + msgFile.getData().length + " bytes)");
             }
 
-        } catch (Exception e) {
-            System.out.println("Client déconnecté");
-            e.printStackTrace();
+            out.writeObject(message);
+            out.flush();
         }
+    } catch (Exception e) {
+        System.out.println("Client déconnecté");
+        e.printStackTrace();
     }
+}
 }

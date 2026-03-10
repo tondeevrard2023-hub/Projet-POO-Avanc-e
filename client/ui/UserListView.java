@@ -32,12 +32,12 @@ public class UserListView extends BorderPane {
     }
     
     private void initializeUI() {
-        this.setStyle("-fx-background-color: white; -fx-border-color: #e9edef; -fx-border-width: 1 0 0 0;");
+        this.getStyleClass().add("user-list-view");
         this.setPrefWidth(320);
         
         VBox mainContainer = new VBox(10);
         mainContainer.setPadding(new Insets(10));
-        mainContainer.setStyle("-fx-background-color: white;");
+        mainContainer.getStyleClass().add("user-list-container");
         
         HBox headerBox = createHeader();
         searchField = createSearchField();
@@ -46,7 +46,7 @@ public class UserListView extends BorderPane {
         filteredUsers = new FilteredList<>(users, p -> true);
         userList = createUserList();
         
-        mainContainer.getChildren().addAll(headerBox, searchField, userList);
+        mainContainer.getChildren().addAll(headerBox, searchField, userList);   
         VBox.setVgrow(userList, Priority.ALWAYS);
         
         this.setCenter(mainContainer);
@@ -59,11 +59,11 @@ public class UserListView extends BorderPane {
         
         titleLabel = new Label("👥 Contacts");
         titleLabel.setFont(Font.font("System", FontWeight.BOLD, 16));
-        titleLabel.setStyle("-fx-text-fill: #00a884;");
+        titleLabel.getStyleClass().add("user-list-title");
         
         countLabel = new Label("0 contacts");
         countLabel.setFont(Font.font(12));
-        countLabel.setStyle("-fx-text-fill: #667781;");
+        countLabel.getStyleClass().add("user-count");
         
         HBox rightBox = new HBox(countLabel);
         rightBox.setAlignment(Pos.CENTER_RIGHT);
@@ -77,12 +77,7 @@ public class UserListView extends BorderPane {
     private TextField createSearchField() {
         TextField searchField = new TextField();
         searchField.setPromptText("🔍 Rechercher un contact...");
-        searchField.setStyle(
-            "-fx-background-color: #f0f2f5;" +
-            "-fx-background-radius: 20;" +
-            "-fx-padding: 8 15;" +
-            "-fx-font-size: 13px;"
-        );
+        searchField.getStyleClass().add("user-search-field");
         
         Tooltip searchTooltip = new Tooltip("Tapez le nom d'un contact");
         searchField.setTooltip(searchTooltip);
@@ -105,10 +100,7 @@ public class UserListView extends BorderPane {
         ListView<User> listView = new ListView<>();
         listView.setItems(filteredUsers);
         listView.setCellFactory(lv -> new UserCell());
-        listView.setStyle(
-            "-fx-background-color: transparent;" +
-            "-fx-border-color: transparent;"
-        );
+        listView.getStyleClass().add("user-listview");
         
         return listView;
     }
@@ -136,7 +128,7 @@ public class UserListView extends BorderPane {
                 HBox container = new HBox(12);
                 container.setPadding(new Insets(8, 10, 8, 10));
                 container.setAlignment(Pos.CENTER_LEFT);
-                container.setStyle("-fx-background-color: transparent;");
+                container.getStyleClass().add("user-cell");
                 
                 // Avatar avec initiale
                 Label avatarLabel = new Label(getInitial(user.getName()));
@@ -144,22 +136,18 @@ public class UserListView extends BorderPane {
                 avatarLabel.setMaxSize(45, 45);
                 avatarLabel.setAlignment(Pos.CENTER);
                 avatarLabel.setFont(Font.font("System", FontWeight.BOLD, 18));
-                avatarLabel.setStyle(
-                    "-fx-background-color: #6c757d;" +
-                    "-fx-background-radius: 25;" +
-                    "-fx-text-fill: white;"
-                );
+                avatarLabel.getStyleClass().add("user-avatar");
                 
                 VBox infoBox = new VBox(3);
                 infoBox.setAlignment(Pos.CENTER_LEFT);
                 
                 Label nameLabel = new Label(user.getName());
                 nameLabel.setFont(Font.font("System", FontWeight.BOLD, 14));
-                nameLabel.setStyle("-fx-text-fill: #111b21;");
+                nameLabel.getStyleClass().add("user-name");
                 
                 Label statusLabel = new Label("Contact");
                 statusLabel.setFont(Font.font(12));
-                statusLabel.setStyle("-fx-text-fill: #667781;");
+                statusLabel.getStyleClass().add("user-status");
                 
                 infoBox.getChildren().addAll(nameLabel, statusLabel);
                 
@@ -237,7 +225,6 @@ public class UserListView extends BorderPane {
         return users;
     }
     
-    // Méthode pour vider la recherche
     public void resetSearch() {
         searchField.clear();
     }

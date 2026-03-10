@@ -1,7 +1,6 @@
 package ui;
 
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.HashMap;
@@ -16,7 +15,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
@@ -43,7 +41,7 @@ import model.Message;
 import model.MessageFile;
 import model.MessageText;
 import model.User;
-import ui.ChatView.ConversationItem;
+import model.ConversationItem;
 
 public class ChatView extends BorderPane {
 
@@ -84,129 +82,6 @@ public class ChatView extends BorderPane {
         PUBLIC_GROUP, PRIVATE
     }
     
-    // Classe interne pour représenter un élément de conversation
-    public static class ConversationItem {
-        private String id;
-        private String name;
-        private ConversationType type;
-        private String lastMessage;
-        private LocalDateTime lastMessageTime;
-        private int unreadCount;
-        private User otherUser;
-        
-        public ConversationItem(String id, String name, ConversationType type) {
-            this.id = id;
-            this.name = name;
-            this.type = type;
-            this.lastMessage = "";
-            this.lastMessageTime = LocalDateTime.now();
-            this.unreadCount = 0;
-        }
-        
-        public String getId() { return id; }
-        public String getName() { return name; }
-        public ConversationType getType() { return type; }
-        public String getLastMessage() { return lastMessage; }
-        public void setLastMessage(String lastMessage) { this.lastMessage = lastMessage; }
-        public LocalDateTime getLastMessageTime() { return lastMessageTime; }
-        public void setLastMessageTime(LocalDateTime lastMessageTime) { this.lastMessageTime = lastMessageTime; }
-        public int getUnreadCount() { return unreadCount; }
-        public void setUnreadCount(int unreadCount) { this.unreadCount = unreadCount; }
-        public void incrementUnreadCount() { this.unreadCount++; }
-        public User getOtherUser() { return otherUser; }
-        public void setOtherUser(User otherUser) { this.otherUser = otherUser; }
-        
-        @Override
-        public String toString() {
-            return name;
-        }
-    }
-    
-    // Cellule personnalisée pour les conversations
-    private class ConversationCell extends ListCell<ConversationItem> {
-        @Override
-        protected void updateItem(ConversationItem item, boolean empty) {
-            super.updateItem(item, empty);
-            
-            if (empty || item == null) {
-                setText(null);
-                setGraphic(null);
-            } else {
-                HBox hbox = new HBox(10);
-                hbox.setPadding(new Insets(8, 10, 8, 10));
-                hbox.setAlignment(Pos.CENTER_LEFT);
-                
-                Label avatarLabel = new Label();
-                avatarLabel.setMinSize(40, 40);
-                avatarLabel.setMaxSize(40, 40);
-                avatarLabel.setAlignment(Pos.CENTER);
-                avatarLabel.getStyleClass().add(item.getType() == 
-                    ConversationType.PUBLIC_GROUP ? "avatar-group" : "avatar-private");
-                
-                if (item.getType() == ConversationType.PUBLIC_GROUP) {
-                    avatarLabel.setText("👥");
-                } else {
-                    avatarLabel.setText("👤");
-                }
-                
-                VBox infoBox = new VBox(3);
-                
-                Label nameLabel = new Label(item.getName());
-                nameLabel.setFont(Font.font("System", FontWeight.BOLD, 14));
-                
-                Label lastMessageLabel = new Label(item.getLastMessage());
-                lastMessageLabel.setFont(Font.font(12));
-                lastMessageLabel.setStyle("-fx-text-fill: #667781;");
-                lastMessageLabel.setMaxWidth(150);
-                
-                infoBox.getChildren().addAll(nameLabel, lastMessageLabel);
-                
-                VBox rightBox = new VBox(5);
-                rightBox.setAlignment(Pos.TOP_RIGHT);
-                
-                Label timeLabel = new Label(formatTime(item.getLastMessageTime()));
-                timeLabel.setFont(Font.font(11));
-                timeLabel.setStyle("-fx-text-fill: #667781;");
-                
-                Label unreadLabel = new Label();
-                if (item.getUnreadCount() > 0) {
-                    unreadLabel.setText(String.valueOf(item.getUnreadCount()));
-                    unreadLabel.setStyle(
-                        "-fx-background-color: #00a884;" +
-                        "-fx-text-fill: white;" +
-                        "-fx-background-radius: 10;" +
-                        "-fx-padding: 2 6 2 6;" +
-                        "-fx-font-size: 11;" +
-                        "-fx-font-weight: bold;"
-                    );
-                }
-                
-                rightBox.getChildren().addAll(timeLabel, unreadLabel);
-                
-                hbox.getChildren().addAll(avatarLabel, infoBox, rightBox);
-                HBox.setHgrow(infoBox, Priority.ALWAYS);
-                
-                if (isSelected()) {
-                    hbox.setStyle("-fx-background-color: #f0f2f5;");
-                }
-                
-                setGraphic(hbox);
-            }
-        }
-        
-        private String getAvatarStyle(ConversationType type) {
-            if (type == ConversationType.PUBLIC_GROUP) {
-                return "-fx-background-color: #00a884; -fx-background-radius: 20; -fx-text-fill: white;";
-            } else {
-                return "-fx-background-color: #6c757d; -fx-background-radius: 20; -fx-text-fill: white;";
-            }
-        }
-        
-        private String formatTime(LocalDateTime time) {
-            return String.format("%02d:%02d", time.getHour(), time.getMinute());
-        }
-    }
-
     public ChatView() {
         conversations = FXCollections.observableArrayList();
         messages = FXCollections.observableArrayList();
@@ -229,27 +104,27 @@ public class ChatView extends BorderPane {
     private VBox createLeftPanel() {
         VBox leftPanel = new VBox();
         leftPanel.setPrefWidth(350);
-        leftPanel.setStyle("-fx-background-color: white; -fx-border-color: #e9edef; -fx-border-width: 0 1 0 0;");
+        leftPanel.getStyleClass().add("left-panel");
         
         HBox headerBox = new HBox(10);
         headerBox.setPadding(new Insets(15, 10, 15, 10));
         headerBox.setAlignment(Pos.CENTER_LEFT);
-        headerBox.setStyle("-fx-background-color: #f0f2f5;");
+        headerBox.getStyleClass().add("left-header");
         
         Label appTitle = new Label("Discussions");
         appTitle.setFont(Font.font("System", FontWeight.BOLD, 18));
         
         Button newChatButton = new Button("➕");
-        newChatButton.setStyle("-fx-background-color: transparent; -fx-font-size: 18;");
+        newChatButton.getStyleClass().add("icon-button");
         newChatButton.setTooltip(new Tooltip("Nouvelle discussion"));
         
         Button menuButton = new Button("☰");
-        menuButton.setStyle("-fx-background-color: transparent; -fx-font-size: 18;");
+        menuButton.getStyleClass().add("icon-button");
         menuButton.setTooltip(new Tooltip("Menu"));
         
         // ========== MODIFICATION : Ajout du bouton paramètres ==========
         settingsButton = new Button("⚙️");
-        settingsButton.setStyle("-fx-background-color: transparent; -fx-font-size: 18;");
+        settingsButton.getStyleClass().add("icon-button");
         settingsButton.setTooltip(new Tooltip("Paramètres"));
         settingsButton.setOnAction(e -> showSettingsDialog());
         
@@ -261,14 +136,14 @@ public class ChatView extends BorderPane {
         
         TextField searchField = new TextField();
         searchField.setPromptText("Rechercher une discussion...");
-        searchField.setStyle("-fx-background-color: #f0f2f5; -fx-background-radius: 20; -fx-padding: 8 15;");
+        searchField.getStyleClass().add("search-field");
         
         HBox searchBox = new HBox(searchField);
         searchBox.setPadding(new Insets(10, 10, 5, 10));
         HBox.setHgrow(searchField, Priority.ALWAYS);
         
         TabPane tabPane = new TabPane();
-        tabPane.setStyle("-fx-background-color: white; -fx-tab-min-width: 120;");
+        tabPane.getStyleClass().add("tab-pane");
         
         Tab allTab = new Tab("Toutes");
         Tab groupsTab = new Tab("Groupes");
@@ -278,7 +153,7 @@ public class ChatView extends BorderPane {
         
         conversationListView = new ListView<>(conversations);
         conversationListView.setCellFactory(list -> new ConversationCell());
-        conversationListView.setStyle("-fx-background-color: white; -fx-border-color: transparent;");
+        conversationListView.getStyleClass().add("conversation-list");
         
         conversationListView.getSelectionModel().selectedItemProperty().addListener(
             (obs, oldVal, newVal) -> {
@@ -288,14 +163,13 @@ public class ChatView extends BorderPane {
             }
         );
         
-        Label contactsSeparator = new Label("Contacts");
+        Label contactsSeparator = new Label();
         contactsSeparator.setFont(Font.font("System", FontWeight.BOLD, 14));
         contactsSeparator.setPadding(new Insets(15, 10, 5, 10));
-        contactsSeparator.setStyle("-fx-text-fill: #00a884;");
+        contactsSeparator.getStyleClass().add("contacts-separator");
         
         userListView = new UserListView();
         userListView.setPrefHeight(200);
-        userListView.setStyle("-fx-background-color: white;");
         userListView.setOnUserSelected(this::handleUserSelected);
         
         VBox.setVgrow(conversationListView, Priority.NEVER);
@@ -303,7 +177,7 @@ public class ChatView extends BorderPane {
         leftPanel.getChildren().addAll(
             headerBox, 
             searchBox, 
-            tabPane, 
+            tabPane,
             conversationListView,
             contactsSeparator,
             userListView
@@ -316,14 +190,14 @@ public class ChatView extends BorderPane {
     
     private BorderPane createCenterPanel() {
         BorderPane centerPanel = new BorderPane();
-        centerPanel.setStyle("-fx-background-color: #efeae2;");
+        centerPanel.getStyleClass().add("center-panel");
         
         HBox chatHeader = createChatHeader();
         centerPanel.setTop(chatHeader);
         
         messageListView = new ListView<>(messages);
         messageListView.setCellFactory(list -> new MessageCell());
-        messageListView.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
+        messageListView.getStyleClass().add("message-list");
         messageListView.setPadding(new Insets(10));
         
         centerPanel.setCenter(messageListView);
@@ -339,18 +213,19 @@ public class ChatView extends BorderPane {
         header.setPadding(new Insets(10, 15, 10, 15));
         header.setAlignment(Pos.CENTER_LEFT);
         header.getStyleClass().add("chat-header");        
+        
         conversationTitleLabel = new Label("Sélectionnez une conversation");
         conversationTitleLabel.setFont(Font.font("System", FontWeight.BOLD, 16));
         
         conversationStatusLabel = new Label("");
         conversationStatusLabel.setFont(Font.font(12));
-        conversationStatusLabel.setStyle("-fx-text-fill: #667781;");
+        conversationStatusLabel.getStyleClass().add("conversation-status");
         
         VBox titleBox = new VBox(2);
         titleBox.getChildren().addAll(conversationTitleLabel, conversationStatusLabel);
         
         infoButton = new Button("ℹ️");
-        infoButton.setStyle("-fx-background-color: transparent; -fx-font-size: 18;");
+        infoButton.getStyleClass().add("info-button");
         infoButton.setTooltip(new Tooltip("Informations de la conversation"));
         
         HBox rightBox = new HBox(infoButton);
@@ -364,31 +239,31 @@ public class ChatView extends BorderPane {
     
     private VBox createInputArea() {
         VBox inputArea = new VBox();
-        inputArea.setStyle("-fx-background-color: #f0f2f5;");
+        inputArea.getStyleClass().add("input-area");
         
         HBox inputBox = new HBox(10);
         inputBox.setPadding(new Insets(10, 15, 10, 15));
         inputBox.setAlignment(Pos.CENTER_LEFT);
         
         emojiButton = new Button("😊");
-        emojiButton.setStyle("-fx-background-color: #ffffff; -fx-text-fill: #000000; -fx-font-size: 20; -fx-background-radius: 20; -fx-padding: 8 12; -fx-border-color: #e0e0e0; -fx-border-radius: 20;");
+        emojiButton.getStyleClass().add("emoji-button");
         emojiButton.setTooltip(new Tooltip("Ajouter un emoji"));
         
         inputField = new TextField();
         inputField.setPromptText("Écrivez un message...");
-        inputField.setStyle("-fx-background-color: white; -fx-background-radius: 20; -fx-padding: 8 15;");
+        inputField.getStyleClass().add("message-input");
         HBox.setHgrow(inputField, Priority.ALWAYS);
         
         fileButton = new Button("📎");
-        fileButton.setStyle("-fx-background-color: #00a88416; -fx-text-fill: white; -fx-font-size: 20; -fx-background-radius: 20; -fx-padding: 8 12;");
+        fileButton.getStyleClass().add("file-button");
         fileButton.setTooltip(new Tooltip("Joindre un fichier"));
         
         sendButton = new Button("➤");
-        sendButton.setStyle("-fx-background-color: #0078FF; -fx-text-fill: white; -fx-font-size: 20; -fx-background-radius: 20; -fx-padding: 8 15;");
+        sendButton.getStyleClass().add("send-button");
         sendButton.setTooltip(new Tooltip("Envoyer"));
         
         quitButton = new Button("✕");
-        quitButton.setStyle("-fx-background-color: #dc3545; -fx-text-fill: white; -fx-font-size: 20; -fx-font-weight: bold; -fx-background-radius: 20; -fx-padding: 8 15;");
+        quitButton.getStyleClass().add("quit-button");
         quitButton.setTooltip(new Tooltip("Quitter le chat"));
         
         inputBox.getChildren().addAll(emojiButton, inputField, fileButton, sendButton, quitButton);
@@ -402,20 +277,19 @@ public class ChatView extends BorderPane {
     private HBox createStatusBar() {
         HBox statusBar = new HBox(10);
         statusBar.setPadding(new Insets(5, 15, 5, 15));
-        statusBar.setStyle("-fx-background-color: #f0f2f5; -fx-border-color: #e9edef; -fx-border-width: 1 0 0 0;");
+        statusBar.getStyleClass().add("status-bar");
         statusBar.setAlignment(Pos.CENTER_LEFT);
         
         connectionStatusLabel = new Label("● Connecté");
-        connectionStatusLabel.setStyle("-fx-text-fill: #00a884; -fx-font-size: 12px; -fx-font-weight: bold;");
         
         onlineCountLabel = new Label("👥 0 en ligne");
-        onlineCountLabel.setStyle("-fx-text-fill: #667781; -fx-font-size: 12px;");
+        onlineCountLabel.getStyleClass().add("online-count");
         
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
         
-        Label versionLabel = new Label("v3.0.0");
-        versionLabel.setStyle("-fx-text-fill: #667781; -fx-font-size: 11px;");
+        Label versionLabel = new Label("v5.0.0");
+        versionLabel.getStyleClass().add("version-label");
         
         statusBar.getChildren().addAll(connectionStatusLabel, onlineCountLabel, spacer, versionLabel);
         
@@ -480,16 +354,6 @@ public class ChatView extends BorderPane {
         }
     }
     
-    // ========== Appliquer le thème ==========
-    private void applyTheme(String theme) {
-        if (theme.equals("sombre")) {
-            this.setStyle("-fx-background-color: #1e1e1e;");
-            // À compléter plus tard
-        } else {
-            this.setStyle("-fx-background-color: #efeae2;");
-        }
-    }
-    
     private void selectConversation(ConversationItem conversation) {
         this.currentConversation = conversation;
         
@@ -504,23 +368,13 @@ public class ChatView extends BorderPane {
             conversationStatusLabel.setText("Conversation privée");
         }
         
-        // messages.clear();
-        
-        // if (conversation.getType() == ConversationType.PUBLIC_GROUP) {
-        //     MessageText welcomeMsg = new MessageText("Bienvenue dans le groupe " + conversation.getName(), 
-        //         new User("Système"));
-        //     welcomeMsg.setVisibility("public");
-        //     messages.add(welcomeMsg);
-        // }
-        
-        // messageListView.refresh();
         // Charger les messages de cette conversation
         ObservableList<Message> convMessages = conversationMessages.get(conversation.getId());
         if (convMessages == null) {
             convMessages = FXCollections.observableArrayList();
             conversationMessages.put(conversation.getId(), convMessages);
         }
-        messages = convMessages; // messages est l'ObservableList utilisée par la ListView
+        messages = convMessages;
         messageListView.setItems(messages);
         
         // Réinitialiser le compteur de messages non lus
@@ -528,7 +382,7 @@ public class ChatView extends BorderPane {
         conversationListView.refresh();
     }
     
-    // Nouvelle méthode pour ajouter un message à une conversation spécifique
+    // méthode pour ajouter un message à une conversation spécifique
     public void addMessageToConversation(String conversationId, Message message) {
         ObservableList<Message> convMessages = conversationMessages.get(conversationId);
 
@@ -545,14 +399,8 @@ public class ChatView extends BorderPane {
         updateConversationLastMessage(conversationId, lastMessageText);
         
         // Si c'est la conversation courante, s'assurer que la ListView est mise à jour
-        // if (currentConversation != null && currentConversation.getId().equals(conversationId)) {
-        //     messageListView.scrollTo(convMessages.size() - 1);
-        // }
-
         if (currentConversation != null && currentConversation.getId().equals(conversationId)) {
-            // Remplacer la liste affichée par celle de la conversation
-            messages.setAll(convMessages);  // messages est la liste affichée dans messageListView
-            messageListView.scrollTo(messages.size() - 1);
+            messageListView.scrollTo(convMessages.size() - 1);
         } else {
             // Sinon, incrémenter le compteur de messages non lus
             for (ConversationItem conv : conversations) {
@@ -562,10 +410,8 @@ public class ChatView extends BorderPane {
                 }
             }
         }
-
     }
 
-    // Dans handleUserSelected, après avoir créé la conversation, l'ajouter à la liste des conversations
     private void handleUserSelected(User selectedUser) {
         String conversationId = "private_" + selectedUser.getName();
         
@@ -574,8 +420,7 @@ public class ChatView extends BorderPane {
         if (privateConv == null) {
             privateConv = new ConversationItem(conversationId, selectedUser.getName(), ConversationType.PRIVATE);
             privateConv.setOtherUser(selectedUser);
-            conversations.add(privateConv); // Ajouter à la liste
-
+            conversations.add(privateConv);
         }
 
         conversationListView.getSelectionModel().select(privateConv);
@@ -616,14 +461,14 @@ public class ChatView extends BorderPane {
         inputField.clear();
     }
     
-    // Modifier addMessage(Message) pour appeler la nouvelle méthode avec la conversation courante
     public void addMessage(Message msg) {
-        if (currentConversation != null) {
+        /* if (currentConversation != null) {
             addMessageToConversation(currentConversation.getId(), msg);
         } else {
-            // Aucune conversation sélectionnée : on ignore ou on loggue
             System.out.println("Message reçu mais aucune conversation active");
-        }
+        } */
+       // 
+       addMessageToConversation(currentConversation.getId(), msg);
     }
     
     public void setOnSendAction(EventHandler<ActionEvent> handler) {
@@ -705,13 +550,11 @@ public class ChatView extends BorderPane {
         return userListView;
     }
     
-    // ========== NOUVELLES MÉTHODES PUBLIQUES POUR LA BARRE DE STATUT ==========
     public void setConnectionStatus(boolean connected, int count) {
         connectionStatusLabel.getStyleClass().removeAll("connection-connected", "connection-disconnected");
         if (connected) {
             connectionStatusLabel.setText("● Connecté");
             connectionStatusLabel.getStyleClass().add("connection-connected");
-
         } else {
             connectionStatusLabel.setText("● Déconnecté");
             connectionStatusLabel.getStyleClass().add("connection-disconnected");
@@ -723,7 +566,6 @@ public class ChatView extends BorderPane {
         onlineCountLabel.setText("👥 " + count + " en ligne");
     }
 
-    // Dans ChatView
     public ConversationItem getOrCreatePrivateConversation(String userId, User user) {
         for (ConversationItem conv : conversations) {
             if (conv.getId().equals(userId)) {
@@ -731,7 +573,7 @@ public class ChatView extends BorderPane {
             }
         }
         ConversationItem newConv = new ConversationItem(userId, user.getName(), ConversationType.PRIVATE);
-        newConv.setOtherUser(new User(user.getName())); // ou passer l'utilisateur
+        newConv.setOtherUser(new User(user.getName()));
         conversations.add(newConv);
         return newConv;
     }
@@ -752,5 +594,4 @@ public class ChatView extends BorderPane {
     public ListView<ConversationItem> getConversationListView() {
         return conversationListView;
     }
-    
 }

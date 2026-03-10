@@ -1,25 +1,27 @@
 package model;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;  // CHANGÉ : import LocalDateTime au lieu de LocalTime
+import java.time.LocalDateTime;  
 
 public class Message implements Serializable {
     private static final long serialVersionUID = 1L;
     
     private User sender;
-    private LocalDateTime timestamp;  // CHANGÉ : LocalDateTime au lieu de LocalTime
+    private User receiver;
+    private LocalDateTime timestamp;
     private boolean isMine;
     private String visibility;
 
     public Message() {
-        this.timestamp = LocalDateTime.now();  // CHANGÉ
+        this.timestamp = LocalDateTime.now();
         this.sender = new User();
+        this.receiver = new User();
         this.visibility = "public";
     }
 
     public Message(User sender) {
         this.sender = sender;
-        this.timestamp = LocalDateTime.now();  // CHANGÉ
+        this.timestamp = LocalDateTime.now();
         this.visibility = "public";
     }
     
@@ -29,10 +31,16 @@ public class Message implements Serializable {
     public void setSender(User sender) {
         this.sender = sender;
     }
-    public LocalDateTime getTimestamp() {  // CHANGÉ
+    public User getReceiver() {
+        return receiver;
+    }
+    public void setReceiver(User receiver) {
+        this.receiver = receiver;
+    }
+    public LocalDateTime getTimestamp() {
         return timestamp;
     }
-    public void setTimestamp(LocalDateTime timestamp) {  // CHANGÉ
+    public void setTimestamp(LocalDateTime timestamp) {
         this.timestamp = timestamp;
     }
     public boolean isMine() {

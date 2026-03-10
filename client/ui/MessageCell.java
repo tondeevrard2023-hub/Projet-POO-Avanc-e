@@ -24,20 +24,11 @@ import model.MessageText;
 
 public class MessageCell extends ListCell<Message> {
 
-    // Indique si la conversation est privée (pour adapter l'affichage)
     private boolean isPrivateConversation = false;
     
-    // Pour la date
     private LocalDate lastMessageDate = null;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd MMMM yyyy");
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
-    
-    // Couleurs
-    private static final String MY_MESSAGE_BLUE = "#0078FF"; // Bleu pour mes messages
-    private static final String OTHER_MESSAGE_COLOR = "#ffffff"; // Blanc
-    private static final String GROUP_MESSAGE_COLOR = "#E9E9EB"; // Gris clair pour groupes
-    private static final String MY_FILE_COLOR = "#e3f2fd"; // Bleu clair pour mes fichiers
-    private static final String OTHER_FILE_COLOR = "#f5f5f5"; // Gris clair pour fichiers des autres
 
     @Override
     protected void updateItem(Message message, boolean empty) {
@@ -50,23 +41,19 @@ public class MessageCell extends ListCell<Message> {
             return;
         }
         
-        // Récupérer le type de conversation depuis les propriétés de la liste
         Object typeProp = getListView().getProperties().get("conversationType");
         if (typeProp instanceof Boolean) {
             this.isPrivateConversation = (Boolean) typeProp;
         }
         
-        // ========== NOUVEAU : Ajouter un séparateur de date ==========
         VBox container = new VBox();
         
-        // Vérifier si on doit afficher la date
         LocalDate messageDate = message.getTimestamp().toLocalDate();
         if (lastMessageDate == null || !lastMessageDate.equals(messageDate)) {
             container.getChildren().add(createDateSeparator(messageDate));
             lastMessageDate = messageDate;
         }
         
-        // Contenu du message
         if (message instanceof MessageText) {
             container.getChildren().add(createTextMessageContent((MessageText) message));
         } else if (message instanceof MessageFile) {
@@ -79,171 +66,116 @@ public class MessageCell extends ListCell<Message> {
         setGraphic(container);
     }
     
-    // ========== NOUVEAU : Créer un séparateur de date ==========
     private HBox createDateSeparator(LocalDate date) {
         HBox separator = new HBox();
         separator.setAlignment(Pos.CENTER);
         separator.setPadding(new Insets(10, 0, 10, 0));
         
         Label dateLabel = new Label(date.format(DATE_FORMATTER));
-        dateLabel.setStyle(
-            "-fx-background-color: #e9edef;" +
-            "-fx-text-fill: #667781;" +
-            "-fx-font-size: 11px;" +
-            "-fx-font-weight: bold;" +
-            "-fx-background-radius: 10;" +
-            "-fx-padding: 4 10;"
-        );
+        dateLabel.getStyleClass().add("date-separator");
         
         separator.getChildren().add(dateLabel);
         return separator;
     }
     
-    // ========== MODIFIÉ : Extraire le contenu du message texte ==========
     private HBox createTextMessageContent(MessageText message) {
-        // Conteneur principal pour l'alignement
         HBox mainContainer = new HBox();
         mainContainer.setPadding(new Insets(5, 10, 5, 10));
         
-        // Bulle de message
         VBox messageBubble = new VBox(3);
         messageBubble.setMaxWidth(350);
+        messageBubble.getStyleClass().add(message.isMine() ? "message-bubble-mine" : 
+            (isPrivateConversation ? "message-bubble-other-private" : "message-bubble-other-group"));
         
-        // Afficher le nom de l'expéditeur seulement dans les conversations de groupe
         if (!message.isMine() && !isPrivateConversation) {
             Label senderLabel = new Label(message.getSender().getName());
             senderLabel.setFont(Font.font("System", FontWeight.BOLD, 11));
-            senderLabel.setStyle("-fx-text-fill: #075E54;");
+            senderLabel.getStyleClass().add("message-sender");
             senderLabel.setPadding(new Insets(0, 0, 0, 8));
             messageBubble.getChildren().add(senderLabel);
         }
         
-        // Contenu du message
         Label contentLabel = new Label(message.getContent());
         contentLabel.setWrapText(true);
         contentLabel.setMaxWidth(300);
         contentLabel.setPadding(new Insets(8, 12, 8, 12));
         contentLabel.setFont(Font.font(14));
+        contentLabel.getStyleClass().add(message.isMine() ? "message-text-mine" : "message-text-other");
         
-        // Heure formatée
         String timeStr = message.getTimestamp().format(TIME_FORMATTER);
         Label hourLabel = new Label(timeStr);
         hourLabel.setFont(Font.font(10));
-        hourLabel.setStyle("-fx-text-fill: #667781;");
+        hourLabel.getStyleClass().add("message-time");
         hourLabel.setPadding(new Insets(0, 4, 2, 0));
         
-        // Conteneur pour l'heure et le statut
         HBox footerBox = new HBox(5);
         footerBox.setAlignment(Pos.CENTER_RIGHT);
         
-        // ========== MODIFIÉ : Confirmation de lecture (doubles ✓✓) ==========
         if (message.isMine()) {
             String status = getMessageStatus(message);
             Label statusLabel = new Label(status);
             statusLabel.setFont(Font.font(12));
-            
-            // Changer la couleur selon le statut
-            if (status.equals("✓✓")) {
-                statusLabel.setStyle("-fx-text-fill: #00a884;"); // Vert pour lu
-            } else {
-                statusLabel.setStyle("-fx-text-fill: #34B7F1;"); // Bleu pour envoyé
-            }
-            
+            statusLabel.getStyleClass().add(status.equals("✓✓") ? "status-read" : "status-sent");
             footerBox.getChildren().add(statusLabel);
         }
         
         footerBox.getChildren().add(hourLabel);
         messageBubble.getChildren().addAll(contentLabel, footerBox);
         
-        // Style de la bulle
-        if (message.isMine()) {
-            messageBubble.setStyle(
-                "-fx-background-color: " + MY_MESSAGE_BLUE + ";" +
-                "-fx-background-radius: 15 15 0 15;" +
-                "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 3, 0, 0, 1);"
-            );
-            contentLabel.setStyle("-fx-text-fill: white; -fx-font-size: 14px;");
-            mainContainer.setAlignment(Pos.CENTER_RIGHT);
-        } else {
-            String bgColor = isPrivateConversation ? OTHER_MESSAGE_COLOR : GROUP_MESSAGE_COLOR;
-            messageBubble.setStyle(
-                "-fx-background-color: " + bgColor + ";" +
-                "-fx-background-radius: 15 15 15 0;" +
-                "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 3, 0, 0, 1);"
-            );
-            contentLabel.setStyle("-fx-text-fill: black; -fx-font-size: 14px;");
-            mainContainer.setAlignment(Pos.CENTER_LEFT);
-        }
-        messageBubble.getStyleClass().add(message.isMine() ? "message-bubble-mine" : "message-bubble-other");
-        
+        mainContainer.setAlignment(message.isMine() ? Pos.CENTER_RIGHT : Pos.CENTER_LEFT);
         mainContainer.getChildren().add(messageBubble);
+        
         return mainContainer;
     }
     
-    // ========== MODIFIÉ : Extraire le contenu du message fichier avec téléchargement ==========
     private HBox createFileMessageContent(MessageFile message) {
-        // Conteneur principal
         HBox mainContainer = new HBox();
         mainContainer.setPadding(new Insets(5, 10, 5, 10));
         
-        // Bulle de message
         VBox messageBubble = new VBox(5);
         messageBubble.setMaxWidth(350);
         messageBubble.setPadding(new Insets(10));
+        messageBubble.getStyleClass().add(message.isMine() ? "file-message-mine" : 
+            (isPrivateConversation ? "file-message-other-private" : "file-message-other-group"));
         
-        // Afficher le nom de l'expéditeur dans les conversations de groupe
         if (!message.isMine() && !isPrivateConversation) {
             Label senderLabel = new Label(message.getSender().getName());
             senderLabel.setFont(Font.font("System", FontWeight.BOLD, 11));
-            senderLabel.setStyle("-fx-text-fill: #075E54;");
+            senderLabel.getStyleClass().add("message-sender");
             messageBubble.getChildren().add(senderLabel);
         }
         
-        // Conteneur pour le fichier
         HBox fileBox = new HBox(12);
         fileBox.setAlignment(Pos.CENTER_LEFT);
         
-        // Icône selon l'extension du fichier
         String icon = getFileIcon(message.getFileName());
         Label iconLabel = new Label(icon);
         iconLabel.setFont(Font.font(24));
         
-        // Informations du fichier
         VBox fileInfo = new VBox(3);
         
-        // Nom du fichier
         Label fileNameLabel = new Label(message.getFileName());
         fileNameLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
         fileNameLabel.setWrapText(true);
         fileNameLabel.setMaxWidth(200);
         
-        // Taille du fichier
         long fileSize = (message.getData() != null) ? message.getData().length : 0;
         Label fileSizeLabel = new Label(formatFileSize(fileSize));
         fileSizeLabel.setFont(Font.font(11));
-        fileSizeLabel.setStyle("-fx-text-fill: #667781;");
+        fileSizeLabel.getStyleClass().add("file-size");
         
         fileInfo.getChildren().addAll(fileNameLabel, fileSizeLabel);
         fileBox.getChildren().addAll(iconLabel, fileInfo);
         
-        // ========== AMÉLIORÉ : Bouton de téléchargement avec sauvegarde ==========
         Button downloadButton = new Button("⬇ Télécharger");
-        downloadButton.setStyle(
-            "-fx-background-color: #00a884;" +
-            "-fx-text-fill: white;" +
-            "-fx-background-radius: 15;" +
-            "-fx-padding: 5 15;" +
-            "-fx-cursor: hand;"
-        );
+        downloadButton.getStyleClass().add("download-button");
         downloadButton.setFont(Font.font(11));
         
         downloadButton.setOnAction(e -> {
-            // Ouvrir une boîte de dialogue pour choisir où sauvegarder
             FileChooser fileChooser = new FileChooser();
             fileChooser.setTitle("Enregistrer le fichier");
             fileChooser.setInitialFileName(message.getFileName());
             
-            // Ajouter des filtres
             String extension = "";
             int lastDot = message.getFileName().lastIndexOf('.');
             if (lastDot > 0) {
@@ -258,10 +190,8 @@ public class MessageCell extends ListCell<Message> {
             
             if (saveFile != null) {
                 try {
-                    // Sauvegarder le fichier
                     Files.write(saveFile.toPath(), message.getData());
                     
-                    // Afficher une notification de succès
                     Alert alert = new Alert(AlertType.INFORMATION);
                     alert.setTitle("Téléchargement réussi");
                     alert.setHeaderText(null);
@@ -269,7 +199,6 @@ public class MessageCell extends ListCell<Message> {
                     alert.showAndWait();
                     
                 } catch (Exception ex) {
-                    // Afficher une erreur
                     Alert alert = new Alert(AlertType.ERROR);
                     alert.setTitle("Erreur");
                     alert.setHeaderText(null);
@@ -280,74 +209,37 @@ public class MessageCell extends ListCell<Message> {
             }
         });
         
-        // Heure formatée
         String timeStr = message.getTimestamp().format(TIME_FORMATTER);
         
-        // Pied du message
         HBox footerBox = new HBox(5);
         footerBox.setAlignment(Pos.CENTER_RIGHT);
         
-        // ========== MODIFIÉ : Confirmation de lecture pour les fichiers ==========
         if (message.isMine()) {
             String status = getMessageStatus(message);
             Label statusLabel = new Label(status);
             statusLabel.setFont(Font.font(12));
-            
-            if (status.equals("✓✓")) {
-                statusLabel.setStyle("-fx-text-fill: #00a884;");
-            } else {
-                statusLabel.setStyle("-fx-text-fill: #34B7F1;");
-            }
-            
+            statusLabel.getStyleClass().add(status.equals("✓✓") ? "status-read" : "status-sent");
             footerBox.getChildren().add(statusLabel);
         }
         
         Label hourLabel = new Label(timeStr);
         hourLabel.setFont(Font.font(10));
-        hourLabel.setStyle("-fx-text-fill: #667781;");
+        hourLabel.getStyleClass().add("message-time");
         footerBox.getChildren().add(hourLabel);
         
         messageBubble.getChildren().addAll(fileBox, downloadButton, footerBox);
         
-        // Style de la bulle
-        if (message.isMine()) {
-            messageBubble.setStyle(
-                "-fx-background-color: #e3f2fd;" +
-                "-fx-background-radius: 15 15 0 15;" +
-                "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 3, 0, 0, 1);"
-            );
-            mainContainer.setAlignment(Pos.CENTER_RIGHT);
-        } else {
-            String bgColor = isPrivateConversation ? "#f5f5f5" : "#e8f0fe";
-            messageBubble.setStyle(
-                "-fx-background-color: " + bgColor + ";" +
-                "-fx-background-radius: 15 15 15 0;" +
-                "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 3, 0, 0, 1);"
-            );
-            mainContainer.setAlignment(Pos.CENTER_LEFT);
-        }
-        
+        mainContainer.setAlignment(message.isMine() ? Pos.CENTER_RIGHT : Pos.CENTER_LEFT);
         mainContainer.getChildren().add(messageBubble);
+        
         return mainContainer;
     }
     
-    // ========== NOUVEAU : Déterminer le statut du message ==========
-    // ========== CORRIGÉ : Déterminer le statut du message ==========
-   private String getMessageStatus(Message message) {
-    // Calculer la différence en minutes entre maintenant et l'heure du message
-    long minutesDiff = java.time.Duration.between(message.getTimestamp(), LocalDateTime.now()).toMinutes();
-    
-    if (minutesDiff > 1) {
-        return "✓✓"; // Lu (si vieux de plus d'1 minute)
-    } else {
-        return "✓"; // Envoyé
-    }
-
+    private String getMessageStatus(Message message) {
+        long minutesDiff = java.time.Duration.between(message.getTimestamp(), LocalDateTime.now()).toMinutes();
+        return minutesDiff > 1 ? "✓✓" : "✓";
     }
     
-    /**
-     * Retourne l'icône appropriée selon l'extension du fichier
-     */
     private String getFileIcon(String fileName) {
         if (fileName == null || fileName.isEmpty()) return "📄";
         
@@ -371,9 +263,6 @@ public class MessageCell extends ListCell<Message> {
         }
     }
     
-    /**
-     * Formate la taille du fichier en unités lisibles
-     */
     private String formatFileSize(long size) {
         if (size < 0) return "Taille inconnue";
         if (size == 0) return "Fichier vide";
@@ -381,12 +270,5 @@ public class MessageCell extends ListCell<Message> {
         if (size < 1024 * 1024) return String.format("%.1f Ko", size / 1024.0);
         if (size < 1024 * 1024 * 1024) return String.format("%.1f Mo", size / (1024.0 * 1024.0));
         return String.format("%.2f Go", size / (1024.0 * 1024.0 * 1024.0));
-    }
-    
-    /**
-     * Définit si la conversation est privée
-     */
-    public void setPrivateConversation(boolean isPrivate) {
-        this.isPrivateConversation = isPrivate;
     }
 }

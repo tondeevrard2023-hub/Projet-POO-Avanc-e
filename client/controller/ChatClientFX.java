@@ -14,24 +14,18 @@ public class ChatClientFX extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        // ========== Charger les sons ==========
-        new Notification().loadSounds();        
+        new Notification().loadSounds();
         
-        // ========== Créer la vue ==========
         chatView = new ChatView();
-
         chatController1 = new ChatController(chatView, primaryStage);
         
-        // ========== Appliquer le thème ==========
-        Theme.setScene(primaryStage.getScene());
-        Theme.apply("dark");
+        Scene scene = new Scene(chatView, 900, 600);
+        primaryStage.setScene(scene);
         
-        // 4. Afficher la fenêtre
-        primaryStage.setScene(new Scene(chatView, 900, 600));
+        Theme.setScene(scene);
+        Theme.apply("light");
+        
         primaryStage.show();
-        
-        // 5. Ajouter un message système
-        // chatView.addMessage(new MessageText("Connexion au serveur en cours...", new User("Système")));
     }
 
     @Override

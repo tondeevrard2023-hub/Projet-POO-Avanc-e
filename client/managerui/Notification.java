@@ -14,18 +14,24 @@ public class Notification {
     // ========== NOUVEAU : Charger les sons ==========
     public void loadSounds() {
         try {
-            URL notificationUrl = getClass().getResource("/ressources/sounds/dragon-studio-new-notification-3-398649.mp3");
-            URL connectUrl = getClass().getResource("/ressources/sounds/universfield-new-notification-09-352705.mp3");
+            URL notificationUrl = getClass().getResource("/ressources/sounds/notification-1.mp3");
+            URL connectUrl = getClass().getResource("/ressources/sounds/notification-3.mp3");
             
             if (notificationUrl != null) {
                 notificationSound = new AudioClip(notificationUrl.toExternalForm());
+            } else {
+                System.err.println("Son de notification non trouvé");
             }
             if (connectUrl != null) {
                 connectSound = new AudioClip(connectUrl.toExternalForm());
+            } else {
+                System.err.println("Son de connexion non trouvé");
             }
+
+            soundEnabled = (notificationSound != null || connectSound != null);
         } catch (Exception e) {
             e.printStackTrace();
-            System.err.println("Sons non trouvés, mode silencieux");
+            System.err.println("Erreur lors du chargement des sons - mode silencieux");
             soundEnabled = false;
         }
     }
